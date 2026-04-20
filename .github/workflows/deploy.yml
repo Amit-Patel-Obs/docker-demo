@@ -19,11 +19,27 @@ jobs:
       - name: Build Docker image
         run: docker build -t docker-demo .
 
-      - name: Run container (test)
-        run: docker run -d -p 3000:3000 docker-demo
+      - name: Run container
+        run: docker run -d -p 3000:3000 --name app-container docker-demo
 
       - name: Check running containers
         run: docker ps
+
+      # ✅ Wait until app is ready
+      - name: Wait for app
+        run: |
+          for i in {1..15}; do
+            if curl -s http://localhost:3000; then
+              echo "App is up ✅"
+              exit 0
+            fi
+            echo "Waiting for app..."
+            sleep 2
+          done
+
+          echo "App failed ❌"
+          docker logs app-container
+          exit 1
 
       - name: Test application
         run: curl http://localhost:3000
